@@ -1,4 +1,4 @@
-from db_functions import DBFunctions
+from db import update_habit, create_habit, delete_habit, record_completed_task
 from datetime import date
 
 
@@ -21,39 +21,61 @@ class Habits:
     """
     def __init__(self, name: str, periodicity: str, task_specification: str):
         """
+        The constructor of the Habits class. It creates an instance of the class with the given attributes.
 
         :param name: The name of the habit.
         :param periodicity: A timeframe used to track the habit. (For example daily or weekly).
-        :param task_specification: The task the user need to perform for this habit. #Decide for this
+        :param task_specification: The task the user need to perform for this habit. (Or a description of the habit)
         """
         self.name = name
-        self.periodicity = periodicity
+        self.periodicity = periodicity.upper()
         self.task_specification = task_specification
         self.date_of_creation = str(date.today())
-        self.dbf = DBFunctions("main.db")
 
-    def change_periodicity(self, new_periodicity):
+    def change_periodicity(self, db,  new_periodicity: str):
         """
+        A function to change the period this habit is tracked.
 
+        :param db: A sqlite3.Connection object.
         :param new_periodicity: A new value for the timeframe used to track this Habit.
-        :return:
+        :return: None
         """
-        self.dbf.update_habit(self.name, new_periodicity, self.task_specification)
+        update_habit(db, self.name, new_periodicity, self.task_specification)
 
-    def change_task_specification(self, new_task_specification):
-        self.dbf.update_habit(self.name, self.periodicity, new_task_specification)
+    def change_task_specification(self, db, new_task_specification: str):
+        """
+        A function to change the task_specification for this habit.
 
-    def store(self):
+        :param db: A sqlite3.Connection object.
+        :param new_task_specification:
+        :return: None
+        """
+        update_habit(db, self.name, self.periodicity, new_task_specification)
+
+    def store(self, db):
         """
         A function used to store the created habit in the database.
-        :return:
-        """
-        self.dbf.create_habit(self.name, self.periodicity, self.task_specification, self.date_of_creation)
 
-    def complete_task(self, completion_date: str = None):
+        :param db: A sqlite3.Connection object.
+        :return: None
+        """
+        create_habit(db, self.name, self.periodicity, self.task_specification, self.date_of_creation)
+
+    def delete(self, db):
+        """
+        A function used to delete a habit in the database.
+
+        :param db: A sqlite3.Connection object.
+        :return: None
+        """
+        delete_habit(db, self.name)
+
+    def complete_task(self, db, completion_date: str = None):
         """
         A function used to record a task as completed in the database.
+
+        :param db: A sqlite3.Connection object.
         :param completion_date: The datetime the task was completed. It becomes time.today() is not specified.
-        :return:
+        :return: None
         """
-        self.dbf.record_completed_task(self.name, completion_date)
+        record_completed_task(db, self.name, completion_date)

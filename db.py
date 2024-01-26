@@ -62,10 +62,10 @@ def insert_initial_data(db: sqlite3.Connection):
         try:
             cursor.execute(query, (name, periodicity, task_specification, str(date.today())))
             db.commit()
-        except sqlite3.IntegrityError as IR:
+        except sqlite3.IntegrityError:
             print("This habit already exists.")
         except Exception as e:
-            print(f"Error in initial_data(): {e}, {type(e)}")
+            print(f"Error in insert_initial_data(): {e}, {type(e)}")
 
         for habit, records in zip(habits_names, habits_records):
             for event_date in records:
@@ -105,9 +105,8 @@ def create_habit(db: sqlite3.Connection, name: str, periodicity: str,
     try:
         cursor.execute(query, (name, periodicity, task_specification, date_of_creation))
         db.commit()
-    except sqlite3.IntegrityError as IR:
-        print(f"Error in create_habit() : {IR}")
-        # print("Sorry, this habit name probably already exists. Try a new one.")
+    except sqlite3.IntegrityError:
+        print("This habit already exists.")
     except Exception as e:
         print(f"Error in create_habit(): {e}, type:{type(e)}")
 
@@ -189,7 +188,7 @@ def get_habit(db: sqlite3.Connection, name: str) -> tuple:
     try:
         cursor.execute(query, (name,))
         return cursor.fetchone()
-    except Exception as e:
+    except sqlite3.Error as e:
         print(f"Error in get_habit(): {e}, {type(e)}")
 
 

@@ -1,6 +1,7 @@
 from db import get_all_habits, get_habits_by_periodicity
 from db import get_habit_records_by_name, get_all_habits_records, get_habit
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
+import sqlite3
 
 
 def calculate_streak(dates_list: list[datetime], timeframe: str) -> int:
@@ -19,7 +20,7 @@ def calculate_streak(dates_list: list[datetime], timeframe: str) -> int:
             if dates_list[i] - timedelta(days=1) == dates_list[i + 1]:
                 streak += 1
             else:
-                streak = 0
+                break
         if streak > 0:
             streak += 1
         return streak
@@ -33,7 +34,7 @@ def calculate_streak(dates_list: list[datetime], timeframe: str) -> int:
             if weekdays[i] + 1 == weekdays[i + 1]:
                 streak += 1
             else:
-                streak = 0
+                break
         if streak > 0:
             streak += 1
         return streak
@@ -44,7 +45,7 @@ def list_all_tracked_habits(db) -> list[str]:
     Function to return a list of all tracked habits in the database.
 
     :param db: A sqlite3.Connection object.
-    :return: A list of strings : The names of the habits stored in the database
+    :return: A list of strings : The data of the habits stored in the database
     """
     habits_list = get_all_habits(db)
     habits_list = [f"{i}." + " " + t[0] + f" ({t[1]})" + f" ({t[2]})" for i, t in enumerate(habits_list, start=1)]
@@ -57,10 +58,10 @@ def list_habits_same_periodicity(db, periodicity: str) -> list[str]:
 
     :param db: A sqlite3.Connection object.
     :param periodicity: A desired string value between DAILY and WEEKLY to determine fetched habits.
-    :return: A list of strings : The names of the habits with the periodicity specified above.
+    :return: A list of strings : The data of the habits with the periodicity specified above.
     """
-    habits_list = list(get_habits_by_periodicity(db, periodicity))
-    habits_list = [habit[0] for habit in habits_list]
+    habits_list = get_habits_by_periodicity(db, periodicity)
+    habits_list = [f"{i}." + " " + t[0] + f" ({t[1]})" + f" ({t[2]})" for i, t in enumerate(habits_list, start=1)]
     return habits_list
 
 
@@ -70,7 +71,7 @@ def calculate_streak_one_habit(db, habit_name: str) -> int:
 
     :param db: A sqlite3.Connection object.
     :param habit_name: The name of the habit which streaks will be calculated.
-    :return: A list of integers representing the maximum streaks (in days).
+    :return: An integer representing the current streak.
     """
     habit_records = get_habit_records_by_name(db, habit_name)
     periodicity = get_habit(db, habit_name)[1]
@@ -86,7 +87,7 @@ def calculate_overall_streak(db) -> int:
     Function to calculate the longest overall streak of all habits' records stored in the database.
 
     :param db: A sqlite3.Connection object.
-    :return: None
+    :return: The maximum streak among all habits' records.
     """
     habits = get_all_habits_records(db)
     habits = [habit[1] for habit in habits]

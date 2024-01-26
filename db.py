@@ -37,11 +37,26 @@ def insert_initial_data(db: sqlite3.Connection):
     :return: None
     """
     cursor = db.cursor()
-    habits_names = ["Regular Exercise", "Healthy Eating",
-                    "Meditation", "Quality Sleep Routine", "Digital Detox"]
-    habits_periodicity = ["weekly", "daily", "daily", "daily", "weekly"]
-    habits_tasks = ["Exercise", "Eat a healthy meal", "Meditate",
-                    "Sleep at fixed time", "Remove all digital devices"]
+    habits_names = ["Regular Exercise",
+                    "Healthy Eating",
+                    "Meditation",
+                    "Quality Sleep Routine",
+                    "Digital Detox"]
+    habits_periodicity = ["WEEKLY",
+                          "DAILY",
+                          "DAILY",
+                          "DAILY",
+                          "WEEKLY"]
+    habits_tasks = ["Exercise",
+                    "Eat a healthy meal",
+                    "Meditate",
+                    "Sleep at fixed time",
+                    "Remove all digital devices"]
+    habits_records = [["2021-01-12", "2021-01-13", "2021-01-14", "2021-01-15", "2021-01-19"],
+                      ["2021-02-16", "2021-02-17"],
+                      ["2022-04-24", "2022-04-26", "2022-04-27", "2022-04-28", "2022-06-02"],
+                      ["2021-05-05", "2021-05-06", "2021-05-07", "2021-05-13", "2021-05-14", "2021-05-15"],
+                      ["2023-01-02", "2023-01-03", "2023-01-04", "2023-01-15", "2023-01-16", "2023-01-17", "2023-01-18"]]
     for name, periodicity, task_specification in zip(habits_names, habits_periodicity, habits_tasks):
         query = """INSERT OR IGNORE INTO habits VALUES (?,?,?,?)"""
         try:
@@ -51,6 +66,10 @@ def insert_initial_data(db: sqlite3.Connection):
             print("This habit already exists.")
         except Exception as e:
             print(f"Error in initial_data(): {e}, {type(e)}")
+
+        for habit, records in zip(habits_names, habits_records):
+            for event_date in records:
+                record_completed_task(db, habit, event_date)
     db.commit()
 
 
@@ -119,9 +138,12 @@ def delete_habit(db: sqlite3.Connection, habit_name: str):
     :return: None
     """
     cursor = db.cursor()
+    query = """DELETE FROM habits WHERE name = ?"""
+    query_2 = """DELETE FROM records WHERE habit_name = ?"""
     try:
-        query = """DELETE FROM habits WHERE name = ?"""
         cursor.execute(query, (habit_name,))
+        cursor.execute(query_2, (habit_name,))
+        print("Habit deleted !")
     except Exception as e:
         print(f"Error in delete_habit(): {e}, {type(e)}")
     db.commit()
@@ -138,16 +160,37 @@ def record_completed_task(db: sqlite3.Connection, name: str, event_date: str = N
     """
     cursor = db.cursor()
     query = "SELECT * from records WHERE date = ? AND habit_name = ?"
+    if not event_date:
+        event_date = str(date.today())
     cursor.execute(query, (event_date, name))
     existing_record = cursor.fetchone()
     if existing_record:
-        print("This record already exists.")
+        # print("This record already exists.")
+        pass
     else:
         if not event_date:
             event_date = str(date.today())
         query = """INSERT INTO records VALUES (?,?)"""
         cursor.execute(query, (event_date, name))
         db.commit()
+        # print("Task recorded successfully !")
+
+
+def get_habit(db: sqlite3.Connection, name: str) -> tuple:
+    """
+    A function used to retrieve data of a single habit in the database.
+
+    :param db: A sqlite3.Connection object
+    :param name: The name of the habit to retrieve
+    :return: A tuple of the habit's data
+    """
+    cursor = db.cursor()
+    query = """SELECT * FROM habits where name = ?"""
+    try:
+        cursor.execute(query, (name,))
+        return cursor.fetchone()
+    except Exception as e:
+        print(f"Error in get_habit(): {e}, {type(e)}")
 
 
 def get_all_habits(db: sqlite3.Connection) -> list[tuple]:

@@ -18,8 +18,9 @@ analysis_choice = {'msg': "", 'choices': ['Return a list of all currently tracke
                                           'Return a list of all habits with the same periodicity',
                                           'Return the longest run streak of all defined habits',
                                           'Return the longest run streak for a given habit']}
-manage_choice = {'msg': "", 'choices': ["Delete a habit", "Change the periodicity for a habit",
-                                        "Change task specification for a habit"]}
+manage_choice = {'msg': "", 'choices': ["Delete a habit",
+                                        "Change the periodicity of a habit",
+                                        "Change task specification of a habit"]}
 habit_name_choice = "Choose a habit"
 
 
@@ -34,9 +35,10 @@ def cli():
 
     def select_habit():
         list_of_habits = get_all_habits(db)
-        habits_names = [habit_[0] for habit_ in list_of_habits]
-        choice = questionary.select(habit_name_choice, choices=habits_names).ask()
-        selected = [habit_ for habit_ in list_of_habits if habit_[0] == choice][0]
+        choices = [f"{i}." + " " + t[0] + f" ({t[1]})" + f" ({t[2]})" for i, t in enumerate(list_of_habits, start=1)]
+        choice = questionary.select(habit_name_choice, choices=choices).ask()
+        selected = list_of_habits[int(choice[0]) - 1]
+        selected = selected[:-1]
         return selected
 
     ans = questionary.confirm(intro_sentence).ask()
@@ -52,12 +54,11 @@ def cli():
         if choice_1 == "Create a new habit":
             choice_2 = questionary.select(predefined_choice['msg'], choices=predefined_choice['choices']).ask()
             if choice_2 == "Choose from predefined":
-                selected_habit = select_habit()
+                selected_habit = list(select_habit())
                 choice_3 = questionary.text(
                     "Please define a new name for this habit (e.g., 'This_Habits_Name_2'):").ask()
-                name, periodicity, task_specification, date_of_creation = selected_habit
-
-                habit = Habits(choice_3, periodicity, task_specification)
+                selected_habit[0] = choice_3
+                habit = Habits(*selected_habit)
                 habit.store(db)
                 print("Habit created successfully !")
             else:
@@ -72,21 +73,18 @@ def cli():
                 print("Habit created successfully !")
         elif choice_1 == "Check-off a habit":
             selected_habit = select_habit()
-            name, periodicity, task_specification, date_of_creation = selected_habit
-            habit = Habits(name, periodicity, task_specification)
+            habit = Habits(*selected_habit)
             habit.complete_task(db)
-            print("Habit checked-off successfully !")
         elif choice_1 == "Manage tracked habits":
             choice_2 = questionary.select(manage_choice['msg'], choices=manage_choice['choices']).ask()
             selected_habit = select_habit()
-            name, periodicity, task_specification, date_of_creation = selected_habit
-            habit = Habits(name, periodicity, task_specification)
+            habit = Habits(*selected_habit)
             if choice_2 == "Delete a habit":
                 habit.delete(db)
-            elif choice_2 == "Change the periodicity for a habit":
-                choice_3 = questionary.text("Enter a new periodicity: ").ask()
+            elif choice_2 == "Change the periodicity of a habit":
+                choice_3 = questionary.select("Select a new periodicity: ", choices=["DAILY", "WEEKLY"]).ask()
                 habit.change_periodicity(db, choice_3)
-            elif choice_2 == "Change task specification for a habit":
+            elif choice_2 == "Change task specification of a habit":
                 choice_3 = questionary.text("Enter a new task specification: ").ask()
                 habit.change_task_specification(db, choice_3)
         elif choice_1 == "Analyse your habits":
@@ -99,8 +97,11 @@ def cli():
                 periodicity = questionary.select("What is the periodicity ?",
                                                  choices=["DAILY", "WEEKLY"]).ask()
                 habits_list = list_habits_same_periodicity(db, periodicity)
-                for habit in habits_list:
-                    print(habit)
+                if habits_list:
+                    for habit in habits_list:
+                        print(habit)
+                else:
+                    print(f"There are no habits with {periodicity} periodicity currently recorded.")
             elif choice_2 == 'Return the longest run streak of all defined habits':
                 streak = calculate_overall_streak(db)
                 print(f"The longest overall streak is: {streak}")

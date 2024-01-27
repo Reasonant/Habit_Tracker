@@ -104,11 +104,11 @@ def cli():
                     print(f"There are no habits with {periodicity} periodicity currently recorded.")
             elif choice_2 == 'Return the longest run streak of all defined habits':
                 streak = calculate_overall_streak(db)
-                print(f"The longest overall streak is: {streak}")
+                print(f"The current longest overall streak is: {streak}")
             elif choice_2 == 'Return the longest run streak for a given habit':
                 selected_habit = select_habit()
                 streak = calculate_streak_one_habit(db, selected_habit[0])
-                print(f"The longest streak for this habit is: {streak}")
+                print(f"The current longest streak for this habit is: {streak}")
         else:
             print(exit_sentence)
             stop = True

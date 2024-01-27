@@ -113,7 +113,7 @@ def create_habit(db: sqlite3.Connection, name: str, periodicity: str,
 
 def update_habit(db: sqlite3.Connection, habit_name: str, periodicity: str, task_specification: str):
     """
-    A function to change a habit's attributes. (periodicity or task_specification).
+    A function used to change a habit's attributes. (periodicity or task_specification).
 
     :param db: The database connection object.
     :param db: The database connection object.
@@ -177,7 +177,7 @@ def record_completed_task(db: sqlite3.Connection, name: str, event_date: str = N
 
 def get_habit(db: sqlite3.Connection, name: str) -> tuple:
     """
-    A function used to retrieve data of a single habit in the database.
+    A function used to retrieve data of a single habit.
 
     :param db: A sqlite3.Connection object
     :param name: The name of the habit to retrieve
@@ -194,7 +194,7 @@ def get_habit(db: sqlite3.Connection, name: str) -> tuple:
 
 def get_all_habits(db: sqlite3.Connection) -> list[tuple]:
     """
-    A function used for retrieving a list of all stored habits.
+    A function used to retrieve a list of all stored habits.
 
     :param db: The database connection object.
     :return: A list of tuples. (NAME, PERIODICITY, TASK_SPECIFICATION, DATE_OF_CREATION).
@@ -206,33 +206,34 @@ def get_all_habits(db: sqlite3.Connection) -> list[tuple]:
     return cursor.fetchall()
 
 
-def get_habit_records_by_name(db: sqlite3.Connection, habit_name: str) -> list[tuple]:
+def get_habit_records_by_name(db: sqlite3.Connection, habit_name: str) -> list[tuple] | None:
     """
-    A function used for retrieving all the records of a given habit.
+    A function used to retrieve all records of a given habit.
 
     :param db: The database connection object.
     :param habit_name: Name of the given habit for which to retrieve data.
     :return: A list of tuples. (DATE, NAME).
     """
     cursor = db.cursor()
-    query = """SELECT * FROM records WHERE habit_name = ?"""
+    query = """SELECT date FROM records WHERE habit_name = ?"""
     try:
         cursor.execute(query, (habit_name,))
         db.commit()
         return cursor.fetchall()
-    except Exception as e:
-        print(f"Error in get_habit_records_by_name(): {e}, type:{type(e)}")
+    except sqlite3.Error as e:
+        print(f"(get_habit_records_by_name(): {e}")
+        return None
 
 
 def get_all_habits_records(db: sqlite3.Connection) -> list[tuple]:
     """
-    A function used for retrieving all records of all habits.
+    A function used to retrieve all records of  habits.
 
     :param db: The database connection object.
-    :return: A list of tuples. (DATE, NAME).
+    :return: A list of tuples. (DATE, ).
     """
     cursor = db.cursor()
-    query = """SELECT * FROM records """
+    query = """SELECT date FROM records """
     cursor.execute(query)
     db.commit()
     return cursor.fetchall()
@@ -240,7 +241,7 @@ def get_all_habits_records(db: sqlite3.Connection) -> list[tuple]:
 
 def get_habits_by_periodicity(db: sqlite3.Connection, periodicity: str) -> list[tuple]:
     """
-    A function used for retrieving all habits with the given periodicity.
+    A function used to retrieve all records of habits with the given periodicity.
 
     :param db: The database connection object.
     :param periodicity: The periodicity of the habits' to return. (DAILY or WEEKLY)

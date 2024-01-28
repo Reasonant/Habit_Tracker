@@ -70,7 +70,7 @@ def list_all_tracked_habits(db) -> list[str]:
     :return: A list of strings : The data of the habits stored in the database
     """
     habits_list = get_all_habits(db)
-    habits_list = [f"{i}." + " " + t[0] + f" ({t[1]})" + f" ({t[2]})" for i, t in enumerate(habits_list, start=1)]
+    habits_list = [f"{i}. {t[0]} ({t[1]}) ({t[2]}) ({t[3]})" for i, t in enumerate(habits_list, start=1)]
     return habits_list
 
 

@@ -24,6 +24,15 @@ manage_choice = {'msg': "", 'choices': ["Delete a habit",
 habit_name_choice = "Choose a habit"
 
 
+def select_habit(db):
+    list_of_habits = get_all_habits(db)
+    choices = [f"{i}. {t[0]} ({t[1]}) ({t[2]})" for i, t in enumerate(list_of_habits, start=1)]
+    choice = questionary.select(habit_name_choice, choices=choices).ask()
+    selected = list_of_habits[int(choice[0]) - 1]
+    selected = selected[:-1]
+    return selected
+
+
 def cli():
     """
     This function exposes a command line interface for the user to interact with the program.
@@ -32,14 +41,6 @@ def cli():
     :return: None
     """
     db = create_database()
-
-    def select_habit():
-        list_of_habits = get_all_habits(db)
-        choices = [f"{i}." + " " + t[0] + f" ({t[1]})" + f" ({t[2]})" for i, t in enumerate(list_of_habits, start=1)]
-        choice = questionary.select(habit_name_choice, choices=choices).ask()
-        selected = list_of_habits[int(choice[0]) - 1]
-        selected = selected[:-1]
-        return selected
 
     ans = questionary.confirm(intro_sentence).ask()
     if ans:
@@ -54,7 +55,7 @@ def cli():
         if choice_1 == "Create a new habit":
             choice_2 = questionary.select(predefined_choice['msg'], choices=predefined_choice['choices']).ask()
             if choice_2 == "Choose from predefined":
-                selected_habit = list(select_habit())
+                selected_habit = list(select_habit(db))
                 choice_3 = questionary.text(
                     "Please define a new name for this habit (e.g., 'This_Habits_Name_2'):").ask()
                 selected_habit[0] = choice_3
@@ -72,12 +73,12 @@ def cli():
                 habit.store(db)
                 print("Habit created successfully !")
         elif choice_1 == "Check-off a habit":
-            selected_habit = select_habit()
+            selected_habit = select_habit(db)
             habit = Habits(*selected_habit)
             habit.complete_task(db)
         elif choice_1 == "Manage tracked habits":
             choice_2 = questionary.select(manage_choice['msg'], choices=manage_choice['choices']).ask()
-            selected_habit = select_habit()
+            selected_habit = select_habit(db)
             habit = Habits(*selected_habit)
             if choice_2 == "Delete a habit":
                 habit.delete(db)
@@ -106,7 +107,7 @@ def cli():
                 streak = calculate_overall_streak(db)
                 print(f"The current longest overall streak is: {streak}")
             elif choice_2 == 'Return the longest run streak for a given habit':
-                selected_habit = select_habit()
+                selected_habit = select_habit(db)
                 streak = calculate_streak_one_habit(db, selected_habit[0])
                 print(f"The current longest streak for this habit is: {streak}")
         else:

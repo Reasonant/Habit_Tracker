@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import date
+from datetime import date, datetime, timedelta
 
 
 def create_tables(db: sqlite3.Connection):
@@ -23,6 +23,7 @@ def create_tables(db: sqlite3.Connection):
     cursor.execute("""CREATE TABLE IF NOT EXISTS records(
             date TEXT,
             habit_name TEXT,
+            UNIQUE (date, habit_name),
             FOREIGN KEY (habit_name) REFERENCES habits(name))""")
 
     db.commit()
@@ -31,7 +32,7 @@ def create_tables(db: sqlite3.Connection):
 def insert_initial_data(db: sqlite3.Connection):
     """
     This function appends the initial data to the database.
-    It appends 5 habits.
+    It appends 5 habits and for each habit it appends a tracking period of 4 weeks into records.
 
     :param db: The database connection object. Received from the caller (create_database())
     :return: None
@@ -52,24 +53,49 @@ def insert_initial_data(db: sqlite3.Connection):
                     "Meditate",
                     "Sleep at fixed time",
                     "Remove all digital devices"]
-    habits_records = [["2021-01-12", "2021-01-13", "2021-01-14", "2021-01-15", "2021-01-19"],
-                      ["2021-02-16", "2021-02-17"],
-                      ["2022-04-24", "2022-04-26", "2022-04-27", "2022-04-28", "2022-06-02"],
-                      ["2021-05-05", "2021-05-06", "2021-05-07", "2021-05-13", "2021-05-14", "2021-05-15"],
-                      ["2023-01-02", "2023-01-03", "2023-01-04", "2023-01-15", "2023-01-16", "2023-01-17", "2023-01-18"]]
+
+    habits_records = []
+    four_weeks_back = datetime.now().date() - timedelta(weeks=4)
+    regular_exercise_tracking_days = [0, 5, 11, 17, 21, 28]
+    digital_detox_tracking_days = [0, 7, 14, 21, 28]
+
+    data_regular_exercise = [str(four_weeks_back + timedelta(days=i)) for i in regular_exercise_tracking_days]
+    habits_records.append(data_regular_exercise)
+
+    data_healthy_eating = [str(four_weeks_back + timedelta(days=i)) for i in range(5)]
+    data_healthy_eating.extend([str(four_weeks_back + timedelta(days=7))])
+    data_healthy_eating.extend([str(four_weeks_back + timedelta(days=i)) for i in range(9, 15)])
+    data_healthy_eating.extend([str(four_weeks_back + timedelta(days=17))])
+    data_healthy_eating.extend([str(four_weeks_back + timedelta(days=i)) for i in range(18, 29)])
+    habits_records.append(data_healthy_eating)
+
+    data_meditation = [str(four_weeks_back + timedelta(days=i)) for i in range(16)]
+    data_meditation.extend([str(four_weeks_back + timedelta(days=18))])
+    data_meditation.extend([str(four_weeks_back + timedelta(days=i)) for i in range(19, 29)])
+    habits_records.append(data_meditation)
+
+    data_quality_sleep_routine = [str(four_weeks_back + timedelta(days=i)) for i in range(14)]
+    data_quality_sleep_routine.extend([str(four_weeks_back + timedelta(days=20))])
+    data_quality_sleep_routine.extend([str(four_weeks_back + timedelta(days=i)) for i in range(21, 29)])
+    habits_records.append(data_quality_sleep_routine)
+
+    data_digital_detox = [str(four_weeks_back + timedelta(days=i)) for i in digital_detox_tracking_days]
+    habits_records.append(data_digital_detox)
+
     for name, periodicity, task_specification in zip(habits_names, habits_periodicity, habits_tasks):
         query = """INSERT OR IGNORE INTO habits VALUES (?,?,?,?)"""
         try:
-            cursor.execute(query, (name, periodicity, task_specification, str(date.today())))
-            db.commit()
+            cursor.execute(query, (name, periodicity, task_specification, str(four_weeks_back)))
         except sqlite3.IntegrityError:
-            print("This habit already exists.")
-        except Exception as e:
-            print(f"Error in insert_initial_data(): {e}, {type(e)}")
+            print(f"{name} already exists.")
 
-        for habit, records in zip(habits_names, habits_records):
-            for event_date in records:
-                record_completed_task(db, habit, event_date)
+    query = """INSERT OR IGNORE INTO records VALUES (?,?)"""
+    for habit, records in zip(habits_names, habits_records):
+        for event_date in records:
+            try:
+                cursor.execute(query, (event_date, habit))
+            except sqlite3.Error as e:
+                print(f"Error in insert_initial_data(): {e}")
     db.commit()
 
 
@@ -107,7 +133,7 @@ def create_habit(db: sqlite3.Connection, name: str, periodicity: str,
         db.commit()
     except sqlite3.IntegrityError:
         print("This habit already exists.")
-    except Exception as e:
+    except sqlite3.Error as e:
         print(f"Error in create_habit(): {e}, type:{type(e)}")
 
 
@@ -124,8 +150,11 @@ def update_habit(db: sqlite3.Connection, habit_name: str, periodicity: str, task
     """
     cursor = db.cursor()
     query = """UPDATE habits SET periodicity = ?, task_specification = ? WHERE name = ?"""
-    cursor.execute(query, (periodicity, task_specification, habit_name))
-    db.commit()
+    try:
+        cursor.execute(query, (periodicity, task_specification, habit_name))
+        db.commit()
+    except sqlite3.Error as e:
+        print(f"Error in update_habit(): {e}, {type(e)}")
 
 
 def delete_habit(db: sqlite3.Connection, habit_name: str):
@@ -142,10 +171,10 @@ def delete_habit(db: sqlite3.Connection, habit_name: str):
     try:
         cursor.execute(query, (habit_name,))
         cursor.execute(query_2, (habit_name,))
+        db.commit()
         print("Habit deleted !")
-    except Exception as e:
+    except sqlite3.Error as e:
         print(f"Error in delete_habit(): {e}, {type(e)}")
-    db.commit()
 
 
 def record_completed_task(db: sqlite3.Connection, name: str, event_date: str = None):
@@ -164,15 +193,14 @@ def record_completed_task(db: sqlite3.Connection, name: str, event_date: str = N
     cursor.execute(query, (event_date, name))
     existing_record = cursor.fetchone()
     if existing_record:
-        # print("This record already exists.")
-        pass
+        print("This record already exists.")
     else:
         if not event_date:
             event_date = str(date.today())
         query = """INSERT INTO records VALUES (?,?)"""
         cursor.execute(query, (event_date, name))
         db.commit()
-        # print("Task recorded successfully !")
+        print("Task recorded successfully !")
 
 
 def get_habit(db: sqlite3.Connection, name: str) -> tuple:
@@ -201,42 +229,44 @@ def get_all_habits(db: sqlite3.Connection) -> list[tuple]:
     """
     cursor = db.cursor()
     query = """SELECT * FROM habits"""
-    cursor.execute(query)
-    db.commit()
-    return cursor.fetchall()
+    try:
+        cursor.execute(query)
+        return cursor.fetchall()
+    except sqlite3.Error as e:
+        print(f"Error in get_all_habits(): {e}, {type(e)}")
 
 
-def get_habit_records_by_name(db: sqlite3.Connection, habit_name: str) -> list[tuple] | None:
+def get_habit_records_by_name(db: sqlite3.Connection, habit_name: str) -> list[tuple]:
     """
     A function used to retrieve all records of a given habit.
 
     :param db: The database connection object.
     :param habit_name: Name of the given habit for which to retrieve data.
-    :return: A list of tuples. (DATE, NAME).
+    :return: A list of tuples. (DATE, ).
     """
     cursor = db.cursor()
     query = """SELECT date FROM records WHERE habit_name = ?"""
     try:
         cursor.execute(query, (habit_name,))
-        db.commit()
         return cursor.fetchall()
     except sqlite3.Error as e:
-        print(f"(get_habit_records_by_name(): {e}")
-        return None
+        print(f"(Error in get_habit_records_by_name(): {e}, {type(e)}")
 
 
 def get_all_habits_records(db: sqlite3.Connection) -> list[tuple]:
     """
-    A function used to retrieve all records of  habits.
+    A function used to retrieve all records of all habits.
 
     :param db: The database connection object.
     :return: A list of tuples. (DATE, ).
     """
     cursor = db.cursor()
     query = """SELECT date FROM records """
-    cursor.execute(query)
-    db.commit()
-    return cursor.fetchall()
+    try:
+        cursor.execute(query)
+        return cursor.fetchall()
+    except sqlite3.Error as e:
+        print(f"Error in get_all_habits_records(): {e}, {type(e)}")
 
 
 def get_habits_by_periodicity(db: sqlite3.Connection, periodicity: str) -> list[tuple]:
@@ -251,7 +281,6 @@ def get_habits_by_periodicity(db: sqlite3.Connection, periodicity: str) -> list[
     query = """SELECT * FROM habits WHERE periodicity = ?"""
     try:
         cursor.execute(query, (periodicity,))
-        db.commit()
         return cursor.fetchall()
-    except Exception as e:
+    except sqlite3.Error as e:
         print(f"Error in get_habits_by_periodicity(): {e}, type:{type(e)}")

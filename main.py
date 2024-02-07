@@ -2,7 +2,7 @@ import questionary
 from habit import Habits
 from db import create_database, get_all_habits
 from analyse import list_all_tracked_habits, list_habits_same_periodicity
-from analyse import calculate_streak_one_habit, calculate_overall_streak
+from analyse import calculate_streak_one_habit, calculate_overall_streak, calculate_longest_lifetime_streak
 
 # Messages used in questionary calls.
 intro_sentence = "Welcome to your Habit Tracking program.\n Shall we proceed ?"
@@ -39,6 +39,14 @@ def select_habit(db) -> tuple:
 
 
 def handle_new_habit(db):
+    """
+    This function handles the habit creation submenu in the main U.I.
+    It asks the user to choose from Predefined Habits or to create a new habit.
+    Then it executes the creation of the habit.
+
+    :param db: The database connection object.
+    :return: None
+    """
     choice = questionary.select(predefined_choice['msg'], choices=predefined_choice['choices']).ask()
     if choice == "Choose from predefined":
         selected_habit = list(select_habit(db))
@@ -61,6 +69,13 @@ def handle_new_habit(db):
 
 
 def handle_manage_habits(db):
+    """
+    This function handles the habit management submenu.
+    Available choices are: Habit Deletion, Change tracking timeframe (periodicity), Change task specification.
+
+    :param db: The database connection object.
+    :return: None
+    """
     choice = questionary.select(manage_choice['msg'], choices=manage_choice['choices']).ask()
     selected_habit = select_habit(db)
     habit = Habits(*selected_habit)
@@ -75,6 +90,12 @@ def handle_manage_habits(db):
 
 
 def handle_analyse_habits(db):
+    """
+    This function handles the habits analysis submenu.
+
+    :param db: The database connection object.
+    :return:
+    """
     choice = questionary.select(analysis_choice['msg'], choices=analysis_choice['choices']).ask()
     if choice == 'Return a list of all currently tracked habits':
         habits_list = list_all_tracked_habits(db)
@@ -90,18 +111,21 @@ def handle_analyse_habits(db):
         else:
             print(f"There are no habits with {periodicity} periodicity currently recorded.")
     elif choice == 'Return the longest run streak of all defined habits':
-        streak = calculate_overall_streak(db)
-        print(f"The current longest overall streak is: {streak}")
+        streak_weekly, streak_daily = calculate_overall_streak(db)
+        print(f"The current longest overall streak (for weekly habits) is: {streak_weekly}")
+        print(f"The current longest overall streak (for daily habits) is: {streak_daily}")
     elif choice == 'Return the longest run streak for a given habit':
         selected_habit = select_habit(db)
         streak = calculate_streak_one_habit(db, selected_habit[0])
+        lifetime_streak = calculate_longest_lifetime_streak(db, selected_habit[0])
         print(f"The current longest streak for this habit is: {streak}")
+        print(f"The longest lifetime streak for this habit is: {lifetime_streak}")
 
 
 def cli():
     """
     This function exposes a command line interface for the user to interact with the program.
-    It starts a loop and exists when the user chooses : 'Exit' in the main menu.
+    It starts a loop and exits when the user chooses : 'Exit' in the main menu.
 
     :return: None
     """

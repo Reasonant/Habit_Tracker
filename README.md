@@ -34,6 +34,25 @@ The program can be started by typing:
 ```bash
 python main.py
 ```
+1. CREATE A NEW HABIT.
+
+   Here you can create a new habit. You can either choose from predefined habits or create your own. Choosing from predefined asks you to choose a new name for the habit because names are used as identifiers.
+
+2. CHECK-OFF A HABIT.
+
+   Here you can check-off a completed task for a habit. You simply choose the desired habit from the list of tracked habits.
+
+3. MANAGE TRACKED HABITS.
+
+   Here you can either DELETE, CHANGE PERIODICITY or CHANGE TASK_SPECIFICATION for a habit.
+
+4. ANALYSE YOUR HABITS.
+   
+   Here you can check some statistics for your habits. You can :
+   1. View a list of all tracked habits.
+   2. View a list of all habits with the same periodicity.
+   3. View the current overall streak of all habits.
+    4. View the current longest streak for a habit.
 
 ## Contributing
 

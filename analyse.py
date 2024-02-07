@@ -3,7 +3,7 @@ from db import get_habit_records_by_name, get_all_habits_records, get_habit
 from datetime import datetime, timedelta
 
 
-def calculate_streak_daily(dates_list: list[datetime]) -> int:
+def calculate_current_streak_daily(dates_list: list[datetime]) -> int:
     """
     Helper function to calculate current daily streak from stored records of completed tasks for a habit.
 
@@ -27,7 +27,7 @@ def calculate_streak_daily(dates_list: list[datetime]) -> int:
     return streak
 
 
-def calculate_streak_weekly(dates_list: list[datetime]) -> int:
+def calculate_current_streak_weekly(dates_list: list[datetime]) -> int:
     """
     Helper function to calculate current weekly streak from stored records of completed tasks for a habit.
     :param dates_list: A list of datetime objects.
@@ -60,6 +60,57 @@ def calculate_streak_weekly(dates_list: list[datetime]) -> int:
         return sum(streak)
     else:
         return 0
+
+
+def calculate_longest_lifetime_streak(db, habit_name: str) -> int:
+    """
+    Helper function to calculate the longest lifetime streak for a given habit.
+
+    :param db: A sqlite3.Connection object.
+    :param habit_name: The name of the habit for which to calculate the streak.
+    :return: An integer. The maximum lifetime streak.
+    """
+    habit_records = get_habit_records_by_name(db, habit_name)
+    periodicity = get_habit(db, habit_name)[1]
+    dates_list = [record[0] for record in habit_records]
+    dates_list = [datetime.strptime(date_str, "%Y-%m-%d") for date_str in dates_list]
+
+    dates_list.sort()
+    streaks = []
+    if periodicity == "DAILY":
+        current_streak = 0
+        for i in range(len(dates_list) - 1):
+            if dates_list[i] + timedelta(days=1) == dates_list[i + 1]:
+                current_streak += 1
+            else:
+                if current_streak > 0:
+                    streaks.append(current_streak + 1)
+                current_streak = 0
+        if current_streak > 0:
+            streaks.append(current_streak + 1)
+        if streaks:
+            return max(streaks)
+        else:
+            return 0
+    elif periodicity == "WEEKLY":
+        weekdays = []
+        for weekday in dates_list:
+            weekdays.append(int(weekday.strftime("%U")))
+
+        current_streak = 0
+        for i in range(len(weekdays) - 1):
+            if weekdays[i] + 1 == weekdays[i + 1]:
+                current_streak += 1
+            else:
+                if current_streak > 0:
+                    streaks.append(current_streak + 1)
+                current_streak = 0
+        if current_streak > 0:
+            streaks.append(current_streak + 1)
+        if streaks:
+            return max(streaks)
+        else:
+            return 0
 
 
 def list_all_tracked_habits(db) -> list[str]:
@@ -100,25 +151,33 @@ def calculate_streak_one_habit(db, habit_name: str) -> int:
     dates = [record[0] for record in habit_records]
     dates = [datetime.strptime(date_str, "%Y-%m-%d") for date_str in dates]
     if periodicity == "DAILY":
-        streak = calculate_streak_daily(dates)
+        streak = calculate_current_streak_daily(dates)
     elif periodicity == "WEEKLY":
-        streak = calculate_streak_weekly(dates)
+        streak = calculate_current_streak_weekly(dates)
+    else:
+        return 0
+    if streak:
+        return streak
     else:
         return 0
 
-    return streak
 
-
-def calculate_overall_streak(db) -> int:
+def calculate_overall_streak(db) -> tuple[int, int]:
     """
     Function to calculate the longest overall streak of all habits' records stored in the database.
 
     :param db: A sqlite3.Connection object.
-    :return: The maximum current streak among all habits' records.
+    :return: A tuple containing the maximum current streak for weekly and daily habits accordingly.
     """
     habits = get_all_habits(db)
-    streaks = []
-    for habit in habits:
-        streak = calculate_streak_one_habit(db, habit[0])
-        streaks.append(streak)
-    return max(streaks)
+    habits_weekly = [h for h in habits if h[1] == "WEEKLY"]
+    habits_daily = [h for h in habits if h[1] == "DAILY"]
+    streaks_weekly = []
+    streaks_daily = []
+    for habit in habits_weekly:
+        streak_weekly = calculate_streak_one_habit(db, habit[0])
+        streaks_weekly.append(streak_weekly)
+    for habit in habits_daily:
+        streak_daily = calculate_streak_one_habit(db, habit[0])
+        streaks_daily.append(streak_daily)
+    return max(streaks_weekly), max(streaks_daily)

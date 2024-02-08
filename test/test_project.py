@@ -1,11 +1,9 @@
-from habit import Habits
-from db import get_all_habits, update_habit
-from db import create_database, create_habit, get_habit
-from db import delete_habit, record_completed_task
-from db import get_habit_records_by_name, get_all_habits_records, get_habits_by_periodicity
+from src.habit import Habits
+from src.database.db import record_completed_task
+from src.database.db import get_habit_records_by_name
+from src.database import db_init
 
-from analyse import list_all_tracked_habits, list_habits_same_periodicity
-from analyse import calculate_streak_one_habit, calculate_overall_streak, calculate_longest_lifetime_streak
+from src.analyse import calculate_streak_one_habit, calculate_longest_lifetime_streak
 
 from datetime import date, timedelta
 

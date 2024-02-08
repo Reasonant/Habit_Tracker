@@ -2,33 +2,6 @@ import sqlite3
 from datetime import date, datetime, timedelta
 
 
-def create_tables(db: sqlite3.Connection):
-    """
-    Creates two tables in the database which we created above.
-    Tables are:
-        habits
-        records
-
-    :param db: The database connection object. Received from the caller (create_database())
-    :return: None
-    """
-    cursor = db.cursor()
-
-    cursor.execute("""CREATE TABLE IF NOT EXISTS habits(
-            name TEXT PRIMARY KEY,
-            periodicity TEXT,
-            task_specification TEXT,
-            date_of_creation TEXT)""")
-
-    cursor.execute("""CREATE TABLE IF NOT EXISTS records(
-            date TEXT,
-            habit_name TEXT,
-            UNIQUE (date, habit_name),
-            FOREIGN KEY (habit_name) REFERENCES habits(name))""")
-
-    db.commit()
-
-
 def insert_initial_data(db: sqlite3.Connection):
     """
     This function appends the initial data to the database.
@@ -97,21 +70,6 @@ def insert_initial_data(db: sqlite3.Connection):
             except sqlite3.Error as e:
                 print(f"Error in insert_initial_data(): {e}")
     db.commit()
-
-
-def create_database(database_name: str = 'main.db'):
-    """
-    This function checks if a database file exists in the same directory as this file.
-    If it does not exist then it creates it.
-    It creates the tables and inserts initial data.
-
-    :param database_name: The name of the database to create.
-    :return: A sqlite3.Connection object
-    """
-    db = sqlite3.connect(database_name)
-    create_tables(db)
-    insert_initial_data(db)
-    return db
 
 
 def create_habit(db: sqlite3.Connection, name: str, periodicity: str,

@@ -1,5 +1,5 @@
-from db import get_all_habits, get_habits_by_periodicity
-from db import get_habit_records_by_name, get_all_habits_records, get_habit
+from src.database.db import get_all_habits, get_habits_by_periodicity
+from src.database.db import get_habit_records_by_name, get_habit
 from datetime import datetime, timedelta
 
 

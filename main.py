@@ -1,9 +1,11 @@
+import os
 import sqlite3
+
 import questionary
+
+from src.database.db import insert_initial_data
 from src.habit import Habits
 from utils.utils import handle_new_habit, handle_manage_habits, handle_analyse_habits, select_habit
-from src.database.db import insert_initial_data
-import os
 
 # Message used in questionary call.
 main_menu = {'msg': "What would you like to do ?",

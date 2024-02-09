@@ -1,17 +1,18 @@
-from src.habit import Habits
-from src.database.db import record_completed_task
-from src.database.db import get_habit_records_by_name
-from src.database import db_init
+import sqlite3
+from datetime import date, timedelta
 
 from src.analyse import calculate_streak_one_habit, calculate_longest_lifetime_streak
-
-from datetime import date, timedelta
+from src.database.db import record_completed_task, insert_initial_data
+from src.database.db_init import create_tables
+from src.habit import Habits
 
 
 class TestHabit:
 
     def setup_method(self):
-        self.db = create_database("test.db")
+        self.db = sqlite3.connect("test.db")
+        create_tables(self.db)
+        insert_initial_data(self.db)
 
     def test_habits(self):
         """
@@ -36,15 +37,12 @@ class TestHabit:
         record_completed_task(self.db, test_habit.name, str(date.today() - timedelta(days=6)))
         record_completed_task(self.db, test_habit.name, str(date.today() - timedelta(days=7)))
 
-        strk_1 = calculate_streak_one_habit(self.db, test_habit.name)
+        streak_current = calculate_streak_one_habit(self.db, test_habit.name)
 
-        strk_2 = calculate_longest_lifetime_streak(self.db, test_habit.name)
+        streak_lifetime = calculate_longest_lifetime_streak(self.db, test_habit.name)
 
-        s = get_habit_records_by_name(self.db, test_habit.name)
-
-        assert strk_1 == 3
-        assert strk_2 == 4
-
+        assert streak_current == 3
+        assert streak_lifetime == 4
 
     def teardown_method(self):
         self.db.close()

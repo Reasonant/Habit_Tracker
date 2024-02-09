@@ -30,7 +30,21 @@ The Habit Tracker is a simple program designed for personal use to help you crea
 
 ## Usage
 
-The program can be started by typing:
+### **Prerequisite** :
+
+Before starting the program you need to create the database if it does not exist.
+The database is a file named "main.db" in the top folder. You can create the database by executing the db_init.py. This is for ensuring that the database which the program uses is always of the same type (correct number and names of tables).
+
+You can execute the db_init.py which is located in the src/database folder by moving to the directory where the script is located:
+```bash
+cd path/to/project_folder/src/database
+```
+And then typing :
+```bash
+python db_init.py
+```
+
+### The program can be started by typing:
 ```bash
 python main.py
 ```

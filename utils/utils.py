@@ -1,8 +1,9 @@
 import questionary
+
+from src.analyse import calculate_streak_one_habit, calculate_longest_lifetime_streak
+from src.analyse import list_all_tracked_habits, list_habits_same_periodicity, calculate_overall_streak
 from src.database.db import get_all_habits
 from src.habit import Habits
-from src.analyse import list_all_tracked_habits, list_habits_same_periodicity, calculate_overall_streak
-from src.analyse import calculate_streak_one_habit, calculate_longest_lifetime_streak
 
 # Messages used in questionary calls.
 predefined_choice = {'msg': "", 'choices': ["Choose from predefined", "Create a new habit"]}

@@ -1,6 +1,7 @@
+from datetime import datetime, timedelta
+
 from src.database.db import get_all_habits, get_habits_by_periodicity
 from src.database.db import get_habit_records_by_name, get_habit
-from datetime import datetime, timedelta
 
 
 def calculate_current_streak_daily(dates_list: list[datetime]) -> int:

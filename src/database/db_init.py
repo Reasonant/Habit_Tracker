@@ -1,5 +1,5 @@
-import sqlite3
 import os
+import sqlite3
 
 
 def create_tables(db: sqlite3.Connection):

@@ -51,7 +51,7 @@ python main.py
 1. CREATE A NEW HABIT.
 
    Here you can create a new habit. You can either choose from predefined habits or create your own. Choosing from predefined asks you to choose a new name for the habit because names are used as identifiers.
-
+For your newly created custom habits you need to specify a name, a tracking period (periodicity) and a task specification (the task you will perform to establish this habit).
 2. CHECK-OFF A HABIT.
 
    Here you can check-off a completed task for a habit. You simply choose the desired habit from the list of tracked habits.
@@ -66,7 +66,7 @@ python main.py
    1. View a list of all tracked habits.
    2. View a list of all habits with the same periodicity.
    3. View the current overall streak of all habits.
-    4. View the current longest streak for a habit.
+    4. View the longest streak for a habit (current and lifetime).
 
 ## Contributing
 
